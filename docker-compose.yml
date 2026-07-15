@@ -1,4 +1,4 @@
-# Spin up shared infrastructure for local development.
+# Full stack: infrastructure + Node.js services
 # Run: docker compose up -d
 version: "3.8"
 services:
@@ -28,8 +28,61 @@ services:
     container_name: clinic-rabbitmq
     restart: unless-stopped
     ports:
-      - "5672:5672"   # AMQP
-      - "15672:15672" # Management UI (guest/guest)
+      - "5672:5672"
+      - "15672:15672"
+
+  booking-service:
+    build: ./booking-service
+    container_name: clinic-booking
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    environment:
+      PORT: 4001
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: rootpass
+      DB_NAME: clinic_booking
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      JWT_SECRET: replace_with_a_long_random_shared_secret
+    depends_on:
+      - mysql
+      - rabbitmq
+
+  patient-service:
+    build: ./patient-service
+    container_name: clinic-patient
+    restart: unless-stopped
+    ports:
+      - "4002:4002"
+    environment:
+      PORT: 4002
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: rootpass
+      DB_NAME: clinic_patients
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      JWT_SECRET: replace_with_a_long_random_shared_secret
+      JWT_EXPIRES_IN: 2h
+    depends_on:
+      - mysql
+      - rabbitmq
+
+  reminder-service:
+    build: ./reminder-service
+    container_name: clinic-reminder
+    restart: unless-stopped
+    ports:
+      - "4003:4003"
+    environment:
+      PORT: 4003
+      MONGO_URI: mongodb://mongo:27017/clinic_reminders
+      RABBITMQ_URL: amqp://rabbitmq:5672
+    depends_on:
+      - mongo
+      - rabbitmq
 
 volumes:
   mysql_data:

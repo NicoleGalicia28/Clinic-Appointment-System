@@ -2,10 +2,13 @@
   "name": "reminder-service",
   "version": "1.0.0",
   "description": "Reminder Service - consumes appointment/patient events, sends simulated SMS reminders, caches patient contact in MongoDB",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "amqplib": "^0.10.4",
@@ -16,6 +19,16 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "@types/amqplib": "^0.10.8",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^26.1.1",
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.4",
+    "ts-jest": "^29.4.11",
+    "ts-node": "^10.9.2",
+    "typescript": "~6.0.0"
   }
 }

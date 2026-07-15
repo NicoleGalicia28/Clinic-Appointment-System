@@ -1,0 +1,59 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  booking-service:
+    name: Booking Service
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: booking-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: booking-service/package-lock.json
+      - run: npm ci --legacy-peer-deps
+      - run: npx tsc --noEmit
+      - run: npx jest --forceExit
+
+  patient-service:
+    name: Patient Service
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: patient-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: patient-service/package-lock.json
+      - run: npm ci --legacy-peer-deps
+      - run: npx tsc --noEmit
+      - run: npx jest --forceExit
+
+  reminder-service:
+    name: Reminder Service
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: reminder-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: reminder-service/package-lock.json
+      - run: npm ci --legacy-peer-deps
+      - run: npx tsc --noEmit
+      - run: npx jest --forceExit
