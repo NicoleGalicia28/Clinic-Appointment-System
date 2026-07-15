@@ -15,13 +15,33 @@ interface AppointmentMessage {
   appointmentTime: string;
 }
 
+function validateMessage(data: any): data is AppointmentMessage {
+  return (
+    typeof data.appointmentId === 'number' &&
+    typeof data.patientId === 'number' &&
+    typeof data.patientName === 'string' &&
+    typeof data.patientContact === 'string' &&
+    typeof data.doctorName === 'string' &&
+    typeof data.appointmentDate === 'string' &&
+    typeof data.appointmentTime === 'string'
+  );
+}
+
 export async function startAppointmentConsumer(channel: Channel): Promise<void> {
+  await channel.prefetch(1);
   await channel.assertQueue(QUEUE_APPOINTMENT_CREATED, { durable: true });
 
   channel.consume(QUEUE_APPOINTMENT_CREATED, async (msg) => {
     if (!msg) return;
     try {
-      const data: AppointmentMessage = JSON.parse(msg.content.toString());
+      const data = JSON.parse(msg.content.toString());
+
+      if (!validateMessage(data)) {
+        console.error('[reminder-service] Invalid appointment.created message — missing required fields');
+        channel.nack(msg, false, false);
+        return;
+      }
+
       console.log(`[reminder-service] received appointment.created for appointment #${data.appointmentId}`);
 
       const reminder = await Reminder.findOneAndUpdate(

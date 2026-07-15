@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 config();
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 
@@ -8,7 +8,7 @@ import { initDb } from './config/db';
 import { connectRabbitMQ } from './config/rabbitmq';
 import { startAppointmentConsumer } from './consumers/appointmentConsumer';
 import { startPatientUpdateConsumer } from './consumers/patientUpdateConsumer';
-import Reminder from './models/reminderModel';
+import reminderRoutes from './routes/reminderRoutes';
 
 const app = express();
 app.use(cors());
@@ -19,27 +19,30 @@ app.get('/health', (_req: Request, res: Response) =>
   res.status(200).json({ service: 'reminder-service', status: 'ok' })
 );
 
-app.get('/api/reminders', async (_req: Request, res: Response) => {
-  try {
-    const reminders = await Reminder.find().sort({ createdAt: -1 });
-    res.status(200).json(reminders);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+app.use('/api/reminders', reminderRoutes);
 
 app.use((_req: Request, res: Response) =>
   res.status(404).json({ error: 'Route not found' })
 );
 
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(err);
+  res.status(500).json({ error: 'Unexpected server error' });
+});
+
 const PORT = process.env.PORT || 4003;
 
 async function start(): Promise<void> {
   await initDb();
-  const channel = await connectRabbitMQ();
-  await startAppointmentConsumer(channel);
-  await startPatientUpdateConsumer(channel);
+
+  try {
+    const channel = await connectRabbitMQ();
+    await startAppointmentConsumer(channel);
+    await startPatientUpdateConsumer(channel);
+  } catch (err: any) {
+    console.warn('[reminder-service] RabbitMQ unavailable. HTTP server will start without consumers.');
+  }
+
   app.listen(PORT, () => console.log(`[reminder-service] running on port ${PORT}`));
 }
 

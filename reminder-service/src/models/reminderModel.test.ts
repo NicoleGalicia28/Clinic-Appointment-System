@@ -13,6 +13,7 @@ describe('Reminder Model', () => {
     expect(paths).toContain('appointmentTime');
     expect(paths).toContain('status');
     expect(paths).toContain('smsAttempts');
+    expect(paths).toContain('lastSyncedAt');
     expect(paths).toContain('contactStale');
     expect(paths).toContain('createdAt');
   });
@@ -42,5 +43,31 @@ describe('Reminder Model', () => {
     const doc = new Reminder({ appointmentId: 1 });
     const validationError = doc.validateSync();
     expect(validationError?.errors?.patientId).toBeDefined();
+  });
+
+  it('requires patientName', async () => {
+    const doc = new Reminder({ appointmentId: 1, patientId: 1 });
+    const validationError = doc.validateSync();
+    expect(validationError?.errors?.patientName).toBeDefined();
+  });
+
+  it('requires patientContactCache', async () => {
+    const doc = new Reminder({ appointmentId: 1, patientId: 1 });
+    const validationError = doc.validateSync();
+    expect(validationError?.errors?.patientContactCache).toBeDefined();
+  });
+
+  it('accepts a fully valid reminder', () => {
+    const doc = new Reminder({
+      appointmentId: 1,
+      patientId: 1,
+      patientName: 'Jane',
+      patientContactCache: '555-0100',
+      doctorName: 'Dr. Smith',
+      appointmentDate: '2026-08-01',
+      appointmentTime: '10:00',
+    });
+    const validationError = doc.validateSync();
+    expect(validationError).toBeUndefined();
   });
 });

@@ -9,13 +9,30 @@ interface PatientUpdateMessage {
   updatedAt: string;
 }
 
+function validateMessage(data: any): data is PatientUpdateMessage {
+  return (
+    typeof data.patientId === 'number' &&
+    typeof data.patientName === 'string' &&
+    typeof data.patientContact === 'string' &&
+    typeof data.updatedAt === 'string'
+  );
+}
+
 export async function startPatientUpdateConsumer(channel: Channel): Promise<void> {
+  await channel.prefetch(1);
   await channel.assertQueue(QUEUE_PATIENT_UPDATED, { durable: true });
 
   channel.consume(QUEUE_PATIENT_UPDATED, async (msg) => {
     if (!msg) return;
     try {
-      const data: PatientUpdateMessage = JSON.parse(msg.content.toString());
+      const data = JSON.parse(msg.content.toString());
+
+      if (!validateMessage(data)) {
+        console.error('[reminder-service] Invalid patient.updated message — missing required fields');
+        channel.nack(msg, false, false);
+        return;
+      }
+
       console.log(`[reminder-service] received patient.updated for patient #${data.patientId}`);
 
       const incomingUpdatedAt = new Date(data.updatedAt);
