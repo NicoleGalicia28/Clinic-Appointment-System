@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 config();
-import mysql, { Pool } from 'mysql2/promise';
+import mysql, { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 
 const pool: Pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -27,4 +27,4 @@ export async function initDb(): Promise<void> {
   console.log('[patient-service] patients table ready');
 }
 
-export { pool };
+export { pool, RowDataPacket, ResultSetHeader };

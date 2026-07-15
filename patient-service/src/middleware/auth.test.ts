@@ -31,9 +31,14 @@ describe('verifyToken middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 401 when Authorization header does not start with Bearer', () => {
+    verifyToken(mockReq('Token abc123'), mockRes(), next);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 403 for invalid token', () => {
     const res = mockRes();
-    verifyToken(mockReq('Bearer bad.token'), res, next);
+    verifyToken(mockReq('Bearer invalid.token.here'), res, next);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });

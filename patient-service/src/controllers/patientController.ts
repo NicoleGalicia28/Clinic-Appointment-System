@@ -93,12 +93,16 @@ export async function updateProfile(req: AuthenticatedRequest, res: Response): P
       return;
     }
 
-    publishPatientUpdated({
+    const published = publishPatientUpdated({
       patientId: updated.id,
       patientName: updated.full_name,
       patientContact: updated.phone,
       updatedAt: updated.updated_at,
     });
+
+    if (!published) {
+      console.warn(`[patient-service] Profile ${updated.id} updated, but queue is down. Reminder cache will not sync.`);
+    }
 
     res.status(200).json({ message: 'Profile updated', patient: updated });
   } catch (err) {
